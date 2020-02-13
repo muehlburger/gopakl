@@ -16,8 +16,8 @@ func main() {
 	for _, d := range devices {
 		fmt.Println(d.Name)
 		for _, a := range d.Addresses {
-			fmt.Printf("   IP:      %s\n", a.IP)
-			fmt.Printf("   Netmask: %s\n", a.Netmask)
+			fmt.Printf("  IP:      %s\n", a.IP)
+			fmt.Printf("  Netmask: %s\n", a.Netmask)
 		}
 	}
 }

@@ -4,20 +4,46 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/google/gopacket"
 	"github.com/google/gopacket/pcap"
+)
+
+var (
+	iface    = "eth0"
+	snaplen  = int32(1600)
+	promisc  = false
+	timeout  = pcap.BlockForever
+	filter   = "tcp and port 80"
+	devFound = false
 )
 
 func main() {
 	devices, err := pcap.FindAllDevs()
 	if err != nil {
-		log.Panic(err)
+		log.Panicln(err)
 	}
 
 	for _, d := range devices {
-		fmt.Println(d.Name)
-		for _, a := range d.Addresses {
-			fmt.Printf("  IP:      %s\n", a.IP)
-			fmt.Printf("  Netmask: %s\n", a.Netmask)
+		if d.Name == iface {
+			devFound = true
 		}
 	}
+	if !devFound {
+		log.Panicf("Device named '%s' does not exist\n", iface)
+	}
+
+	handle, err := pcap.OpenLive(iface, snaplen, promisc, timeout)
+	defer handle.Close()
+	if err != nil {
+		log.Panicln(err)
+	}
+
+	if err := handle.SetBPFFilter(filter); err != nil {
+		log.Panicln(err)
+	}
+	source := gopacket.NewPacketSource(handle, handle.LinkType())
+	for packet := range source.Packets() {
+		fmt.Println(packet)
+	}
+
 }

@@ -5,15 +5,16 @@ import (
 	"log"
 
 	"github.com/google/gopacket"
+	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
 )
 
 var (
-	iface    = "eth0"
+	iface    = "lo0"
 	snaplen  = int32(1600)
 	promisc  = false
 	timeout  = pcap.BlockForever
-	filter   = "tcp and port 80"
+	filter   = "tcp and port 4224"
 	devFound = false
 )
 
@@ -43,7 +44,21 @@ func main() {
 	}
 	source := gopacket.NewPacketSource(handle, handle.LinkType())
 	for packet := range source.Packets() {
-		fmt.Println(packet)
-	}
+		// Get the TCP layer from this packet
+		if tcpLayer := packet.Layer(layers.LayerTypeTCP); tcpLayer != nil {
+			fmt.Println("This is a TCP packet!")
 
+			// Get actual TCP data from this layer
+			tcp, _ := tcpLayer.(*layers.TCP)
+			if tcp.SYN {
+				fmt.Printf("SYN %v\n", tcp.SYN)
+			}
+			if tcp.ACK {
+				fmt.Printf("ACK %v\n", tcp.ACK)
+			}
+			if tcp.RST {
+				fmt.Printf("RST %v\n", tcp.RST)
+			}
+		}
+	}
 }
